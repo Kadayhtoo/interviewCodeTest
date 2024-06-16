@@ -1,45 +1,64 @@
-version: '3.8'
-
+version: '3'
 services:
+
+  #PHP Service
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: laravel_app
+    image: php:7.2-fpm-buster
+    container_name: app
     restart: unless-stopped
+    tty: true
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
     working_dir: /var/www
     volumes:
-      - .:/var/www
+      - ./:/var/www
       - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
     networks:
-      - laravel
-    ports:
-      - "8000:80"
+      - app-network
 
-  mysql:
-    image: mysql:5.7
-    container_name: laravel_mysql
+  #Nginx Service
+  webserver:
+    image: nginx:alpine
+    container_name: webserver
     restart: unless-stopped
-    environment:
-      MYSQL_DATABASE: laravel
-      MYSQL_ROOT_PASSWORD: secret
+    tty: true
+    ports:
+      - "80:80"
+      - "443:443"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - ./:/var/www
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
     networks:
-      - laravel
+      - app-network
+
+  #MySQL Service
+  db:
+    image: mysql:5.7.22
+    container_name: db
+    restart: unless-stopped
+    tty: true
     ports:
       - "3306:3306"
-
-  redis:
-    image: redis:alpine
-    container_name: laravel_redis
-    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: interview
+      MYSQL_ROOT_PASSWORD: root
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    volumes:
+      - dbdata:/var/lib/mysql/
+      - ./mysql/my.cnf:/etc/mysql/my.cnf
     networks:
-      - laravel
+      - app-network
 
-volumes:
-  mysql_data:
-
+#Docker Networks
 networks:
-  laravel:
+  app-network:
     driver: bridge
+#Volumes
+volumes:
+  dbdata:
+    driver: local

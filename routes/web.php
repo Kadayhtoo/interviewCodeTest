@@ -17,8 +17,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Auth::routes();
-
+ Auth::routes();
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
-Route::get('/approve-user/{id}', [App\Http\Controllers\AdminController::class, 'approveUser'])->name('approve');
+Route::middleware(['role:admin'])->get('/approve-user/{id}', [App\Http\Controllers\AdminController::class, 'approveUser'])->name('approve');
 Route::get('/photo', [App\Http\Controllers\HomeController::class, 'showPhoto'])->name('photo');
